@@ -2,12 +2,14 @@ from django.db import models
 
 
 class Article(models.Model):
-
     title = models.CharField(max_length=256, verbose_name='Название')
     text = models.TextField(verbose_name='Текст')
     published_at = models.DateTimeField(verbose_name='Дата публикации')
-    image = models.ImageField(null=True, blank=True, verbose_name='Изображение',)
-    scopes = models.ManyToManyField('Scopes', through='ArticleScopes', related_name='scopes')
+    image = models.ImageField(null=True, blank=True, verbose_name='Изображение', )
+    scopes = models.ManyToManyField('Scopes',
+                                    through='ArticleScopes',
+                                    related_name='scopes',
+                                    through_fields=('article', 'scopes'))
 
     class Meta:
         verbose_name = 'Статья'
@@ -18,9 +20,12 @@ class Article(models.Model):
 
 
 class Scopes(models.Model):
-
     topic = models.CharField(max_length=100, verbose_name='Тэг статьи')
-    articles = models.ManyToManyField(Article, through='ArticleScopes', related_name='articles')
+    articles = models.ManyToManyField(Article,
+                                      through='ArticleScopes',
+                                      related_name='articles',
+                                      through_fields=('scopes', 'article')
+                                      )
 
     class Meta:
         verbose_name = 'Тэг статьи'
@@ -31,7 +36,10 @@ class Scopes(models.Model):
 
 
 class ArticleScopes(models.Model):
-
-    article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='article')
-    scopes = models.ForeignKey(Scopes, on_delete=models.CASCADE, related_name='scope')
+    article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='scope_is_main')
+    scopes = models.ForeignKey(Scopes, on_delete=models.CASCADE, related_name='scope_is_main')
     is_main = models.BooleanField(verbose_name='Основной тэг')
+
+    class Meta:
+        ordering = ['-is_main']
+
